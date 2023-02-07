@@ -1,3 +1,5 @@
+# Version 0.1
+#
 # Koji callback plugin for sending notifications about events to fedora-messaging
 # Copyright (c) 2009-2023 Red Hat, Inc.
 #
