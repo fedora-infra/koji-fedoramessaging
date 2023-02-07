@@ -10,6 +10,7 @@
 import logging
 import re
 import time
+import pkg_resources
 
 from koji.context import context
 from koji.plugin import callbacks
@@ -17,6 +18,17 @@ from koji.plugin import callback
 from koji.plugin import ignore_error
 import fedora_messaging.api
 import fedora_messaging.exceptions
+
+
+from koji_fedoramessaging_messages.build import BuildStateChangeV1
+from koji_fedoramessaging_messages.package import ListChangeV1
+from koji_fedoramessaging_messages.repo import DoneV1, InitV1
+from koji_fedoramessaging_messages.rpm import SignV1
+from koji_fedoramessaging_messages.tag import TagV1, UntagV1
+from koji_fedoramessaging_messages.task import TaskStateChangeV1
+
+from jsonschema.exceptions import ValidationError
+
 import kojihub
 
 
@@ -37,7 +49,7 @@ def serialize_datetime_in_task(task):
     for date_key in date_fields:
         if task.get(date_key) is None:
             continue
-        if isinstance(task[date_key], (float, int, long)):
+        if isinstance(task[date_key], (float, int)):
             continue
         task[date_key] = time.mktime(task[date_key].timetuple())
 
@@ -234,6 +246,21 @@ def queue_message(cbtype, *args, **kws):
     context.fedmsg_plugin_messages = messages
 
 
+def get_message(topic, body):
+    message_object = None
+
+    for entry_point in pkg_resources.iter_entry_points("fedora.messages"):
+        cls = entry_point.load()
+        if cls().topic == topic:
+            message_object = cls
+            break
+    if message_object is None:
+        message_object = fedora_messaging.api.Message
+    
+    return message_object(topic=topic,body=body)
+
+
+
 # Meanwhile, postCommit actually sends messages.
 @callback('postCommit')
 @ignore_error
@@ -243,13 +270,16 @@ def send_messages(cbtype, *args, **kws):
     for message in messages:
         try:
             topic = "buildsys.{}".format(message['topic'])
-            msg = fedora_messaging.api.Message(
-                topic=topic,
-                body=message['msg']
-            )
+            msg = get_message(topic,message['msg'])
             log.info("Publishing message on topic {}".format(topic))
             log.debug("Message body {}".format(message['msg']))
-            fedora_messaging.api.publish(msg)
+            try:
+                fedora_messaging.api.publish(msg)
+            except ValidationError as e:
+                log.exception(f"Schema for {topic} message (id {msg.id}) from Koji not valid trying to send message as generic fedoramessaging message. Error: {e}")
+                newmsg = fedora_messaging.api.Message(topic=topic,body=message['msg'])
+                newmsg.id = msg.id
+                fedora_messaging.api.publish(newmsg)
         except fedora_messaging.exceptions.PublishReturned as e:
             log.warning(
                 "Fedora Messaging broker rejected message %s: %s", msg.id, e
