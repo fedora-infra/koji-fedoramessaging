@@ -1,5 +1,5 @@
 Name:           koji-fedoramessaging
-Version:        1.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        Enable Koji to send Fedora Messaging messages
 Group:          Applications/System
@@ -13,7 +13,7 @@ BuildRequires:  python3-devel
 BuildRequires:  python-setuptools
 
 Requires:   python3-koji-hub
-Requires:   python3-fedoramessaging-messages
+Requires:   python3-koji-fedoramessaging-messages
 
 %description
 Enable Koji to send Fedora Messaging messages
@@ -34,5 +34,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/koji-hub-plugins
 
 %changelog
+* Thu Feb 09 2023 Ryan Lerch <rlerch@redhat.com> - 1.0.1-1
+- Tweak logging so kojihub logger can find the logs
 * Tue Feb 07 2023 Ryan Lerch <rlerch@redhat.com> - 1.0-1
 - Initial Release
