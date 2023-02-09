@@ -35,7 +35,12 @@ import kojihub
 
 
 MAX_KEY_LENGTH = 255
-log = logging.getLogger(__name__)
+
+# Set the logger to something that the koji logging system understands.
+# This way we can control the logging level of this plugin from koji's hub.conf
+# by adding this 'koji._koji_plugin__koji-fedoramessaging:INFO' to the LogLevel
+# conf value in hub.conf
+log = logging.getLogger(f"koji.{__name__}")
 
 
 def camel_to_dots(name):
