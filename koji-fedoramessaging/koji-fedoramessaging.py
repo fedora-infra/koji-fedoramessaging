@@ -14,6 +14,7 @@ import re
 import time
 import pkg_resources
 
+from koji import PathInfo, read_config_files
 from koji.context import context
 from koji.plugin import callbacks
 from koji.plugin import callback
@@ -43,6 +44,19 @@ MAX_KEY_LENGTH = 255
 log = logging.getLogger(f"koji.{__name__}")
 
 
+def get_kojiweb_config(environ):
+    cf = environ.get("koji.web.ConfigFile", "/etc/kojiweb/web.conf")
+    cfdir = environ.get("koji.web.ConfigDir", "/etc/kojiweb/web.conf.d")
+    print("rcf:", read_config_files)
+    return read_config_files([cfdir, (cf, True)])
+
+
+def get_base_url(environ):
+    host = environ.get("HTTP_X_FORWARDED_HOST", environ["SERVER_NAME"])
+    url_scheme = environ.get("HTTP_X_FORWARDED_SCHEME", environ["wsgi.url_scheme"])
+    return f"{url_scheme}://{host}"
+
+
 def camel_to_dots(name):
     s1 = re.sub("(.)([A-Z][a-z]+)", r"\1.\2", name)
     return re.sub("([a-z0-9])([A-Z])", r"\1.\2", s1).lower()
@@ -67,6 +81,7 @@ def serialize_datetime_in_task(task):
 
 def get_message_body(topic, *args, **kws):
     msg = {}
+    msg["base_url"] = get_base_url(context.environ)
 
     if topic == "package.list.change":
         msg["tag"] = kws["tag"]["name"]
@@ -81,6 +96,10 @@ def get_message_body(topic, *args, **kws):
         msg["force"] = kws.get("force", None)
         msg["update"] = kws.get("update", None)
     elif topic == "task.state.change":
+        kojiweb_config = get_kojiweb_config(context.environ)
+        msg["files_base_url"] = PathInfo(
+            topdir=kojiweb_config.get("web", "KojiFilesURL").rstrip("/")
+        ).work()
         info = kws["info"]
         serialize_datetime_in_task(info)
 
