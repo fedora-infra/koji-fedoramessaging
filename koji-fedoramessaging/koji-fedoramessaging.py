@@ -76,7 +76,7 @@ def serialize_datetime_in_task(task):
             continue
         if isinstance(task[date_key], (float, int)):
             continue
-        task[date_key] = time.mktime(task[date_key].timetuple())
+        task[date_key] = task[date_key].replace(microsecond=0).timestamp()
 
 
 def get_message_body(topic, *args, **kws):
