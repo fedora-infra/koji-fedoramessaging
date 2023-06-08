@@ -11,29 +11,15 @@
 
 import logging
 import re
-import time
-import pkg_resources
 
-from koji import PathInfo, read_config_files
-from koji.context import context
-from koji.plugin import callbacks
-from koji.plugin import callback
-from koji.plugin import ignore_error
 import fedora_messaging.api
 import fedora_messaging.exceptions
-
-
-from koji_fedoramessaging_messages.build import BuildStateChangeV1
-from koji_fedoramessaging_messages.package import ListChangeV1
-from koji_fedoramessaging_messages.repo import DoneV1, InitV1
-from koji_fedoramessaging_messages.rpm import SignV1
-from koji_fedoramessaging_messages.tag import TagV1, UntagV1
-from koji_fedoramessaging_messages.task import TaskStateChangeV1
-
-from jsonschema.exceptions import ValidationError
-
 import kojihub
-
+import pkg_resources
+from jsonschema.exceptions import ValidationError
+from koji import PathInfo, read_config_files
+from koji.context import context
+from koji.plugin import callback, callbacks, ignore_error
 
 MAX_KEY_LENGTH = 255
 
@@ -279,9 +265,7 @@ def queue_message(cbtype, *args, **kws):
         if isinstance(obj, list):
             return [scrub(item) for item in obj]
         if isinstance(obj, dict):
-            return dict(
-                [(k, scrub(v)) for k, v in obj.items() if k not in problem_fields]
-            )
+            return dict([(k, scrub(v)) for k, v in obj.items() if k not in problem_fields])
         return obj
 
     body = scrub(body)
@@ -315,15 +299,17 @@ def send_messages(cbtype, *args, **kws):
 
     for message in messages:
         try:
-            topic = "buildsys.{}".format(message["topic"])
+            topic = f"buildsys.{message['topic']}"
             msg = get_message(topic, message["msg"])
-            log.info("Publishing message on topic {}".format(topic))
-            log.debug("Message body {}".format(message["msg"]))
+            log.info(f"Publishing message on topic {topic}")
+            log.debug(f"Message body {message['msg']}")
             try:
                 fedora_messaging.api.publish(msg)
             except ValidationError as e:
                 log.exception(
-                    f"Schema for {topic} message (id {msg.id}) from Koji not valid trying to send message as generic fedoramessaging message. Error: {e}"
+                    f"Schema for {topic} message (id {msg.id}) from Koji not valid "
+                    f"trying to send message as generic fedoramessaging message. "
+                    f"Error: {e}"
                 )
                 newmsg = fedora_messaging.api.Message(topic=topic, body=message["msg"])
                 newmsg.id = msg.id
