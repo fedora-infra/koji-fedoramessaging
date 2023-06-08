@@ -79,6 +79,30 @@ def serialize_datetime_in_task(task):
         task[date_key] = task[date_key].replace(microsecond=0).timestamp()
 
 
+def get_task_result(task_id):
+    task = kojihub.Task(task_id)
+    try:
+        return task.getResult()
+    except Exception as e:
+        err_msg = f"Could not get the Task result of task {task.id}: {e}"
+        log.warning(err_msg)
+        return None
+
+
+def get_full_task_info(task_info, msg):
+    task = kojihub.Task(task_info["id"])
+    serialize_datetime_in_task(task_info)
+    task_info["host_name"] = (
+        kojihub.get_host(task_info["host_id"])["name"] if task_info.get("host_id") else None
+    )
+    task_info["url"] = f"{msg['base_url']}/koji/taskinfo?taskID={task.id}"
+    task_info["result"] = get_task_result(task.id)
+    task_info["children"] = []
+    for child in task.getChildren():
+        task_info["children"].append(get_full_task_info(child, msg))
+    return task_info
+
+
 def get_message_body(topic, *args, **kws):
     msg = {}
     msg["base_url"] = get_base_url(context.environ)
@@ -100,37 +124,26 @@ def get_message_body(topic, *args, **kws):
         msg["files_base_url"] = PathInfo(
             topdir=kojiweb_config.get("web", "KojiFilesURL").rstrip("/")
         ).work()
-        info = kws["info"]
-        serialize_datetime_in_task(info)
-
-        # Stuff in information about descendant tasks
-        task = kojihub.Task(info["id"])
-        info["children"] = []
-        for child_orig in task.getChildren():
-            child = child_orig.copy()
-            serialize_datetime_in_task(child)
-            info["children"].append(child)
-
         # Send the whole info dict along because it might have useful info.
         # For instance, it contains the mention of what format createAppliance
         # is using (raw or qcow2).
-        msg["info"] = info
-        msg["method"] = kws["info"]["method"]
+        msg["info"] = get_full_task_info(kws["info"], msg)
+        msg["method"] = msg["info"]["method"]
         msg["attribute"] = kws["attribute"]
         msg["old"] = kws["old"]
         msg["new"] = kws["new"]
-        msg["id"] = kws["info"]["id"]
+        msg["id"] = msg["info"]["id"]
 
         # extract a useful identifier from the request string
         request = kws.get("info", {}).get("request", ["/"])
         msg["srpm"] = request[0].split("/")[-1]
 
-        if "owner_name" in info:
-            msg["owner"] = info["owner_name"]
-        elif "owner_id" in info:
-            msg["owner"] = kojihub.get_user(info["owner_id"])["name"]
-        elif "owner" in info:
-            msg["owner"] = kojihub.get_user(info["owner"])["name"]
+        if "owner_name" in msg["info"]:
+            msg["owner"] = msg["info"]["owner_name"]
+        elif "owner_id" in msg["info"]:
+            msg["owner"] = kojihub.get_user(msg["info"]["owner_id"])["name"]
+        elif "owner" in msg["info"]:
+            msg["owner"] = kojihub.get_user(msg["info"]["owner"])["name"]
         else:
             msg["owner"] = None
 
