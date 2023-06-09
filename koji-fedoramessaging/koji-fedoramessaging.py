@@ -246,24 +246,24 @@ def queue_message(cbtype, *args, **kws):
         if not isinstance(request, dict) or not request.get("scratch"):
             return
 
+    # Don't publish these uninformative rpm.sign messages if there's no actual
+    # sigkey present.  Koji apparently adds a dummy sig value when rpms are
+    # first imported and there's no need to spam the world about that.
+    if cbtype == "postRPMSign" and (
+        kws.get("info", {}).get("sigkey") == "" or kws.get("sigkey") == ""
+    ):
+        return
+
+    # Also, do not want to send a message on volume_id changes
+    if cbtype == "postBuildStateChange" and kws.get("attribute") == "volume_id":
+        return
+
     topic = camel_to_dots(msgtype)
     body = get_message_body(topic, *args, **kws)
 
     # We need this to distinguish between messages from primary koji
     # and the secondary hubs off for s390 and ppc.
     body["instance"] = "primary"
-
-    # Don't publish these uninformative rpm.sign messages if there's no actual
-    # sigkey present.  Koji apparently adds a dummy sig value when rpms are
-    # first imported and there's no need to spam the world about that.
-    if topic == "rpm.sign" and (
-        body.get("info", {}).get("sigkey") == "" or body.get("sigkey") == ""
-    ):
-        return
-
-    # Also, do not want to send a message on volume_id changes
-    if topic == "build.state.change" and body.get("attribute") == "volume_id":
-        return
 
     # Last thing to do before publishing: scrub some problematic fields
     # These fields are floating points which get json-encoded differently on

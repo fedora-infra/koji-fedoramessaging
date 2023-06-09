@@ -117,3 +117,14 @@ def test_simple(module):
     assert len(context.fedmsg_plugin_messages) == 1
     msg = context.fedmsg_plugin_messages[0]
     assert msg == {"topic": "rpm.sign", "msg": TEST_DATA["msg"]}
+
+
+def test_no_sigkey(module):
+    kws = {
+        "sigkey": "",
+        "sighash": "",
+        "build": {},
+        "rpm": {},
+    }
+    module["queue_message"]("postRPMSign", **kws)
+    assert not hasattr(context, "fedmsg_plugin_messages")

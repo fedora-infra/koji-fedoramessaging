@@ -319,3 +319,25 @@ def test_simple(module, event):
     assert len(context.fedmsg_plugin_messages) == 1
     msg = context.fedmsg_plugin_messages[0]
     assert msg == {"topic": "build.state.change", "msg": TEST_DATA[event]["msg"]}
+
+
+def test_volumeid_change(module):
+    kws = {
+        "attribute": "volume_id",
+        "old": 0,
+        "new": 1,
+        "info": {
+            "name": "dummy",
+            "version": "1.0",
+            "release": "1",
+            "creation_time": datetime.datetime(
+                2023, 6, 9, 6, 45, 50, 418152, tzinfo=datetime.timezone.utc
+            ),
+            "completion_time": None,
+            "task_id": 101962163,
+        },
+    }
+    module["kojihub"].Task.side_effect = AssertionError("no Task should be instanciated")
+    run_callbacks("postBuildStateChange", **kws)
+    assert not hasattr(context, "fedmsg_plugin_messages")
+    module["kojihub"].Task.assert_not_called()
