@@ -1,0 +1,51 @@
+# See the documentation for more information:
+# https://packit.dev/docs/configuration/
+
+specfile_path: koji-fedoramessaging.spec
+
+issue_repository: https://github.com/fedora-infra/koji-fedoramessaging
+
+# add or remove files that should be synced
+files_to_sync:
+    - koji-fedoramessaging.spec
+    - .packit.yaml
+
+# name in upstream package repository or registry (e.g. in PyPI)
+upstream_package_name: koji-fedoramessaging
+# downstream (Fedora) RPM package name
+downstream_package_name: koji-fedoramessaging
+
+srpm_build_deps:
+  - wget
+
+actions:
+  create-archive:
+    - "git archive -o koji-fedoramessaging.tar.gz --prefix koji-fedoramessaging/ HEAD"
+    - "echo koji-fedoramessaging.tar.gz"
+  get-current-version:
+    - "rpmspec -q --qf '%{V}' koji-fedoramessaging.spec"
+
+jobs:
+  # upon upstream PRs, perform copr builds
+  - job: copr_build
+    trigger: pull_request
+    metadata:
+      targets:
+        - fedora-latest-stable
+        - fedora-development
+
+  - job: tests
+    trigger: pull_request
+    metadata:
+      targets:
+        - fedora-latest-stable
+        - fedora-development
+
+  # upon upstream release, perform copr builds
+  - job: copr_build
+    trigger: release
+    metadata:
+      targets:
+        - fedora-latest-stable
+        - fedora-development
+      project: fasjson-client
