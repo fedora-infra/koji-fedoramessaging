@@ -16,7 +16,7 @@ upstream_package_name: koji-fedoramessaging
 downstream_package_name: koji-fedoramessaging
 
 srpm_build_deps:
-  - wget
+  - rpm-build
 
 actions:
   create-archive:
@@ -25,27 +25,15 @@ actions:
   get-current-version:
     - "rpmspec -q --qf '%{V}' koji-fedoramessaging.spec"
 
+targets:
+  - fedora-latest-stable
+
 jobs:
-  # upon upstream PRs, perform copr builds
+
+  # upon PRs, perform COPR builds
   - job: copr_build
     trigger: pull_request
-    metadata:
-      targets:
-        - fedora-latest-stable
-        - fedora-development
 
-  - job: tests
-    trigger: pull_request
-    metadata:
-      targets:
-        - fedora-latest-stable
-        - fedora-development
-
-  # upon upstream release, perform copr builds
+  # upon releases, perform COPR builds
   - job: copr_build
     trigger: release
-    metadata:
-      targets:
-        - fedora-latest-stable
-        - fedora-development
-      project: fasjson-client
