@@ -8,6 +8,7 @@
 # Authors:
 #     Ralph Bean <rbean@redhat.com>
 #     Mike Bonnet <mikeb@redhat.com>
+#     Aurelien Bompard <abompard@fedoraproject.org>
 
 import logging
 import re
