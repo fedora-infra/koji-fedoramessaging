@@ -75,17 +75,29 @@ def get_task_result(task_id):
         return None
 
 
-def get_full_task_info(task_info, msg):
+def get_owner(info):
+    if "owner_name" in info:
+        return info["owner_name"]
+    elif "owner_id" in info:
+        return kojihub.get_user(info["owner_id"])["name"]
+    elif "owner" in info:
+        return kojihub.get_user(info["owner"])["name"]
+    else:
+        return None
+
+
+def get_full_task_info(task_info, base_url):
     task = kojihub.Task(task_info["id"])
     serialize_datetime_in_task(task_info)
     task_info["host_name"] = (
         kojihub.get_host(task_info["host_id"])["name"] if task_info.get("host_id") else None
     )
-    task_info["url"] = f"{msg['base_url']}/koji/taskinfo?taskID={task.id}"
+    task_info["url"] = f"{base_url}/koji/taskinfo?taskID={task.id}"
     task_info["result"] = get_task_result(task.id)
+    task_info["owner"] = get_owner(task_info)
     task_info["children"] = []
     for child in task.getChildren():
-        task_info["children"].append(get_full_task_info(child, msg))
+        task_info["children"].append(get_full_task_info(child, base_url))
     return task_info
 
 
@@ -113,25 +125,17 @@ def get_message_body(topic, *args, **kws):
         # Send the whole info dict along because it might have useful info.
         # For instance, it contains the mention of what format createAppliance
         # is using (raw or qcow2).
-        msg["info"] = get_full_task_info(kws["info"], msg)
+        msg["info"] = get_full_task_info(kws["info"], msg["base_url"])
         msg["method"] = msg["info"]["method"]
         msg["attribute"] = kws["attribute"]
         msg["old"] = kws["old"]
         msg["new"] = kws["new"]
         msg["id"] = msg["info"]["id"]
+        msg["owner"] = msg["info"]["owner"]
 
         # extract a useful identifier from the request string
         request = kws.get("info", {}).get("request", ["/"])
         msg["srpm"] = request[0].split("/")[-1]
-
-        if "owner_name" in msg["info"]:
-            msg["owner"] = msg["info"]["owner_name"]
-        elif "owner_id" in msg["info"]:
-            msg["owner"] = kojihub.get_user(msg["info"]["owner_id"])["name"]
-        elif "owner" in msg["info"]:
-            msg["owner"] = kojihub.get_user(msg["info"]["owner"])["name"]
-        else:
-            msg["owner"] = None
 
     elif topic == "build.state.change":
         info = kws["info"]
