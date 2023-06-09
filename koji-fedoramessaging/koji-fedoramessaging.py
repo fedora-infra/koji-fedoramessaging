@@ -103,6 +103,10 @@ def get_full_task_info(task_info, base_url):
 def get_message_body(topic, *args, **kws):
     msg = {}
     msg["base_url"] = get_base_url(context.environ)
+    kojiweb_config = get_kojiweb_config(context.environ)
+    msg["files_base_url"] = PathInfo(
+        topdir=kojiweb_config.get("web", "KojiFilesURL").rstrip("/")
+    ).work()
 
     if topic == "package.list.change":
         msg["tag"] = kws["tag"]["name"]
@@ -117,10 +121,6 @@ def get_message_body(topic, *args, **kws):
         msg["force"] = kws.get("force", None)
         msg["update"] = kws.get("update", None)
     elif topic == "task.state.change":
-        kojiweb_config = get_kojiweb_config(context.environ)
-        msg["files_base_url"] = PathInfo(
-            topdir=kojiweb_config.get("web", "KojiFilesURL").rstrip("/")
-        ).work()
         # Send the whole info dict along because it might have useful info.
         # For instance, it contains the mention of what format createAppliance
         # is using (raw or qcow2).
@@ -147,21 +147,27 @@ def get_message_body(topic, *args, **kws):
         msg["new"] = kws["new"]
         msg["build_id"] = info.get("id", None)
         msg["task_id"] = info.get("task_id", None)
+        msg["owner"] = get_owner(info)
+        if msg["build_id"]:
+            msg["url"] = f"{msg['base_url']}/koji/buildinfo?buildID={msg['build_id']}"
+        else:
+            # May happen on preBuildStateChange for new builds, no ID yet.
+            # That said, we don't subscribe to that at the moment...
+            msg["url"] = None
 
         if msg["task_id"]:
             task = kojihub.Task(msg["task_id"])
-            msg["request"] = task.getRequest()
+            msg["task"] = get_full_task_info(task.getInfo(request=True), msg["base_url"])
+            msg["request"] = msg["task"]["request"]
         else:
+            msg["task"] = None
             msg["request"] = None
 
-        if "owner_name" in info:
-            msg["owner"] = info["owner_name"]
-        elif "owner_id" in info:
-            msg["owner"] = kojihub.get_user(info["owner_id"])["name"]
-        elif "owner" in info:
-            msg["owner"] = kojihub.get_user(info["owner"])["name"]
-        else:
-            msg["owner"] = None
+        # Add the timestamps
+        msg["creation_time"] = info["creation_time"].isoformat()
+        msg["completion_time"] = (
+            info["completion_time"].isoformat() if info["completion_time"] else None
+        )
 
     elif topic == "import":
         # TODO -- import is currently unused.

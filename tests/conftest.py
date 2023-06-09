@@ -100,6 +100,7 @@ def kojihub():
         task.id = task_id
         task.getChildren.side_effect = lambda: []
         task.getResult.return_value = None
+        task.getInfo.return_value = {}
         mod._tasks[task_id] = task
         return task
 
