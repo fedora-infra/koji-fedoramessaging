@@ -33,7 +33,6 @@ log = logging.getLogger(f"koji.{__name__}")
 def get_kojiweb_config(environ):
     cf = environ.get("koji.web.ConfigFile", "/etc/kojiweb/web.conf")
     cfdir = environ.get("koji.web.ConfigDir", "/etc/kojiweb/web.conf.d")
-    print("rcf:", read_config_files)
     return read_config_files([cfdir, (cf, True)])
 
 
@@ -134,7 +133,7 @@ def get_message_body(topic, *args, **kws):
         msg["owner"] = msg["info"]["owner"]
 
         # extract a useful identifier from the request string
-        request = kws.get("info", {}).get("request", ["/"])
+        request = kws["info"].get("request", ["/"])
         msg["srpm"] = request[0].split("/")[-1]
 
     elif topic == "build.state.change":

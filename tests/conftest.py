@@ -142,6 +142,8 @@ def _register_callbacks(mod):
             and getattr(entry, "callbacks", None)
         ):
             for cbtype in entry.callbacks:
+                # Don't ignore errors
+                entry.failure_is_an_option = False
                 register_callback(cbtype, entry)
 
 
