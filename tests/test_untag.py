@@ -75,7 +75,6 @@ TEST_DATA = {
         "build_id": 2211093,
         "instance": "primary",
         "base_url": "https://koji.stg.fedoraproject.org",
-        "files_base_url": "http://files.example.com/work",
     },
 }
 

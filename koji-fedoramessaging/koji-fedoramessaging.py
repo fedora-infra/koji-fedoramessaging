@@ -31,16 +31,17 @@ MAX_KEY_LENGTH = 255
 log = logging.getLogger(f"koji.{__name__}")
 
 
-def get_kojiweb_config(environ):
-    cf = environ.get("koji.web.ConfigFile", "/etc/kojiweb/web.conf")
-    cfdir = environ.get("koji.web.ConfigDir", "/etc/kojiweb/web.conf.d")
-    return read_config_files([cfdir, (cf, True)])
-
-
 def get_base_url(environ):
     host = environ.get("HTTP_X_FORWARDED_HOST", environ["SERVER_NAME"])
     url_scheme = environ.get("HTTP_X_FORWARDED_SCHEME", environ["wsgi.url_scheme"])
     return f"{url_scheme}://{host}"
+
+
+def get_files_base_url(environ):
+    cf = environ.get("koji.web.ConfigFile", "/etc/kojiweb/web.conf")
+    cfdir = environ.get("koji.web.ConfigDir", "/etc/kojiweb/web.conf.d")
+    kojiweb_config = read_config_files([cfdir, (cf, True)])
+    return PathInfo(topdir=kojiweb_config.get("web", "KojiFilesURL").rstrip("/")).work()
 
 
 def camel_to_dots(name):
@@ -104,10 +105,6 @@ def get_full_task_info(task_info, base_url):
 def get_message_body(topic, *args, **kws):
     msg = {}
     msg["base_url"] = get_base_url(context.environ)
-    kojiweb_config = get_kojiweb_config(context.environ)
-    msg["files_base_url"] = PathInfo(
-        topdir=kojiweb_config.get("web", "KojiFilesURL").rstrip("/")
-    ).work()
 
     if topic == "package.list.change":
         msg["tag"] = kws["tag"]["name"]
@@ -132,6 +129,7 @@ def get_message_body(topic, *args, **kws):
         msg["new"] = kws["new"]
         msg["id"] = msg["info"]["id"]
         msg["owner"] = msg["info"]["owner"]
+        msg["files_base_url"] = get_files_base_url(context.environ)
 
         # extract a useful identifier from the request string
         request = kws["info"].get("request", ["/"])
@@ -149,6 +147,7 @@ def get_message_body(topic, *args, **kws):
         msg["build_id"] = info.get("id", None)
         msg["task_id"] = info.get("task_id", None)
         msg["owner"] = get_owner(info)
+        msg["files_base_url"] = get_files_base_url(context.environ)
         if msg["build_id"]:
             msg["url"] = f"{msg['base_url']}/koji/buildinfo?buildID={msg['build_id']}"
         else:

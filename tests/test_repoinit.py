@@ -23,7 +23,6 @@ TEST_DATA = {
     },
     "msg": {
         "base_url": "https://koji.stg.fedoraproject.org",
-        "files_base_url": "http://files.example.com/work",
         "tag": "epel7-infra-mailman",
         "tag_id": 409,
         "repo_id": 9001680,

@@ -59,7 +59,6 @@ TEST_DATA = {
         "sigkey": "18b8e74c",
         "sighash": "e7556957058ad918c6264179d3bf5d31",
         "base_url": "https://koji.stg.fedoraproject.org",
-        "files_base_url": "http://files.example.com/work",
         "build": {
             "build_id": 2211158,
             "cg_id": None,

@@ -112,7 +112,6 @@ TEST_DATA = {
         "repo_id": 5216957,
         "instance": "primary",
         "base_url": "https://koji.stg.fedoraproject.org",
-        "files_base_url": "http://files.example.com/work",
     },
 }
 
