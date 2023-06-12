@@ -15,8 +15,8 @@ srpm_build_deps:
 
 actions:
   create-archive:
-    - "git archive -o koji-fedoramessaging.tar.gz --prefix koji-fedoramessaging/ HEAD"
-    - "echo koji-fedoramessaging.tar.gz"
+    - "sh -c 'git archive -o koji-fedoramessaging-${PACKIT_PROJECT_VERSION}.tar.gz --prefix koji-fedoramessaging-${PACKIT_PROJECT_VERSION}/ HEAD'"
+    - "sh -c 'echo koji-fedoramessaging-${PACKIT_PROJECT_VERSION}.tar.gz'"
   get-current-version:
     - "rpmspec -q --qf '%{V}' koji-fedoramessaging.spec"
 
