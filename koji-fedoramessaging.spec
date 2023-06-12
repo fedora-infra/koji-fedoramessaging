@@ -1,5 +1,5 @@
 Name:           koji-fedoramessaging
-Version:        1.1.1
+Version:        1.1.2
 Release:        1%{?dist}
 Summary:        Enable Koji to send Fedora Messaging messages
 Group:          Applications/System
@@ -34,6 +34,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/koji-hub-plugins
 
 %changelog
+* Mon Jun 12 2023 Aurelien Bompard <abompard@fedoraproject.org> - 1.1.2-1
+- The files_base_url is only relevant for build and task state changes
 * Fri Jun 09 2023 Aurelien Bompard <abompard@fedoraproject.org> - 1.1.1-1
 - Don't call get_message_body() needlessly
 * Fri Jun 09 2023 Aurelien Bompard <abompard@fedoraproject.org> - 1.1.0-1
