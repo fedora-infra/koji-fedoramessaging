@@ -291,7 +291,7 @@ def get_message(topic, body):
 
     for entry_point in pkg_resources.iter_entry_points("fedora.messages"):
         cls = entry_point.load()
-        if cls().topic == topic:
+        if cls.topic == topic:
             message_object = cls
             break
     if message_object is None:

@@ -3,6 +3,7 @@ import datetime
 import pytest
 from koji.context import context
 from koji.plugin import run_callbacks
+from koji_fedoramessaging_messages.build import BuildStateChangeV1
 
 TEST_DATA = {
     "start": {
@@ -319,6 +320,8 @@ def test_simple(module, event):
     assert len(context.fedmsg_plugin_messages) == 1
     msg = context.fedmsg_plugin_messages[0]
     assert msg == {"topic": "build.state.change", "msg": TEST_DATA[event]["msg"]}
+    fm_msg = module["get_message"](f"buildsys.{msg['topic']}", msg["msg"])
+    assert isinstance(fm_msg, BuildStateChangeV1)
 
 
 def test_volumeid_change(module):
