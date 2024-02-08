@@ -10,3 +10,7 @@ coverage.xml
 
 #sphinx
 build
+
+# packit
+*.src.rpm
+*.tar.gz
