@@ -61,11 +61,11 @@ TEST_DATA = {
                 "start_time": 1686218181.0,
                 "state": 1,
                 "waiting": None,
-                "request": (
+                "request": [
                     "git+https://src.stg.fedoraproject.org/rpms/python-atpublic.git#ae8818da76ae0d4ea00bac7c3c8e7d11608ea3b0",
                     "rawhide",
                     {"scratch": True},
-                ),
+                ],
                 "host_name": "builder.example.com",
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011364",
                 "result": None,
@@ -139,11 +139,11 @@ TEST_DATA = {
                 "start_time": 1686218181.0,
                 "state": 2,
                 "waiting": False,
-                "request": (
+                "request": [
                     "git+https://src.stg.fedoraproject.org/rpms/python-atpublic.git#ae8818da76ae0d4ea00bac7c3c8e7d11608ea3b0",
                     "rawhide",
                     {"scratch": True},
-                ),
+                ],
                 "result": None,
                 "host_name": "builder.example.com",
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011364",
@@ -216,11 +216,11 @@ TEST_DATA = {
                 "start_time": 1686226086.0,
                 "state": 5,
                 "waiting": True,
-                "request": (
+                "request": [
                     "cli-build/1686226086.4513252.NoatzAfE/khal-0.11.2-1.fc38.src.rpm",
                     "rawhide",
                     {"scratch": True},
-                ),
+                ],
                 "host_name": "builder.example.com",
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011398",
                 "result": None,
@@ -293,11 +293,11 @@ TEST_DATA = {
                 "start_time": 1686225544.0,
                 "state": 3,
                 "waiting": True,
-                "request": (
+                "request": [
                     "git+https://src.stg.fedoraproject.org/rpms/python-atpublic.git#ae8818da76ae0d4ea00bac7c3c8e7d11608ea3b0",
                     "rawhide",
                     {"scratch": True},
-                ),
+                ],
                 "host_name": "builder.example.com",
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011396",
                 "result": None,
@@ -374,11 +374,11 @@ CLOSE_WITH_SUBTASKS_MSG = {
         "start_time": 1686224114.0,
         "state": 2,
         "waiting": False,
-        "request": (
+        "request": [
             "cli-build/1686224113.0942957.VtfzIqPe/golang-modernc-file-1.0.8-1.fc38.src.rpm",
             "rawhide",
             {"scratch": True},
-        ),
+        ],
         "result": None,
         "host_name": "builder.example.com",
         "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011389",

@@ -56,10 +56,10 @@ TEST_DATA = {
             "build_id": 2211149,
             "url": "https://koji.stg.fedoraproject.org/koji/buildinfo?buildID=2211149",
             "task_id": 101963955,
-            "request": (
+            "request": [
                 "Fedora-Cloud-Base-Vagrant",
                 "38",
-            ),
+            ],
             "owner": "releng",
             "instance": "primary",
             "completion_time": None,
@@ -69,7 +69,7 @@ TEST_DATA = {
                 "host_name": None,
                 "id": 110011364,
                 "owner": "dummy-user",
-                "request": ("Fedora-Cloud-Base-Vagrant", "38"),
+                "request": ["Fedora-Cloud-Base-Vagrant", "38"],
                 "result": None,
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011364",
             },
@@ -131,11 +131,11 @@ TEST_DATA = {
             "build_id": 2211083,
             "url": "https://koji.stg.fedoraproject.org/koji/buildinfo?buildID=2211083",
             "task_id": 101962689,
-            "request": (
+            "request": [
                 "git+https://src.fedoraproject.org/rpms/grep.git#799f88f953393ea45f722b71669744948c12a422",
                 "rawhide",
                 {},
-            ),
+            ],
             "owner": "jskarvad",
             "instance": "primary",
             "completion_time": "2023-06-09T07:32:16.160696+00:00",
@@ -145,11 +145,11 @@ TEST_DATA = {
                 "host_name": None,
                 "id": 110011364,
                 "owner": "dummy-user",
-                "request": (
+                "request": [
                     "git+https://src.fedoraproject.org/rpms/grep.git#799f88f953393ea45f722b71669744948c12a422",
                     "rawhide",
                     {},
-                ),
+                ],
                 "result": None,
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011364",
             },
@@ -209,10 +209,10 @@ TEST_DATA = {
             "task_id": 101962703,
             "completion_time": "2023-06-09T07:31:20.218065+00:00",
             "creation_time": "2023-06-09T07:17:04.429699+00:00",
-            "request": (
+            "request": [
                 "Fedora-Cloud-Base-Vagrant",
                 "38",
-            ),
+            ],
             "owner": "releng",
             "instance": "primary",
             "task": {
@@ -220,7 +220,7 @@ TEST_DATA = {
                 "host_name": None,
                 "id": 110011364,
                 "owner": "dummy-user",
-                "request": ("Fedora-Cloud-Base-Vagrant", "38"),
+                "request": ["Fedora-Cloud-Base-Vagrant", "38"],
                 "result": None,
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011364",
             },
@@ -280,10 +280,10 @@ TEST_DATA = {
             "task_id": 101962163,
             "completion_time": "2023-06-09T07:31:20.250419+00:00",
             "creation_time": "2023-06-09T06:45:50.418152+00:00",
-            "request": (
+            "request": [
                 "Fedora-Container-Minimal-Base",
                 "38",
-            ),
+            ],
             "owner": "releng",
             "instance": "primary",
             "task": {
@@ -291,7 +291,7 @@ TEST_DATA = {
                 "host_name": None,
                 "id": 110011364,
                 "owner": "dummy-user",
-                "request": ("Fedora-Container-Minimal-Base", "38"),
+                "request": ["Fedora-Container-Minimal-Base", "38"],
                 "result": None,
                 "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011364",
             },

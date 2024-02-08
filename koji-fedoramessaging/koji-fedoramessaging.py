@@ -96,6 +96,8 @@ def get_full_task_info(task_info, base_url):
     task_info["url"] = f"{base_url}/koji/taskinfo?taskID={task.id}"
     task_info["result"] = get_task_result(task.id)
     task_info["owner"] = get_owner(task_info)
+    if isinstance(task_info.get("request"), tuple):
+        task_info["request"] = list(task_info["request"])
     task_info["children"] = []
     for child in task.getChildren():
         task_info["children"].append(get_full_task_info(child, base_url))
