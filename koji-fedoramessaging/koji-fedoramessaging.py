@@ -12,11 +12,11 @@
 
 import logging
 import re
+from importlib.metadata import entry_points
 
 import fedora_messaging.api
 import fedora_messaging.exceptions
 import kojihub
-import pkg_resources
 from jsonschema.exceptions import ValidationError
 from koji import PathInfo, read_config_files
 from koji.context import context
@@ -291,7 +291,7 @@ def queue_message(cbtype, *args, **kws):
 def get_message(topic, body):
     message_object = None
 
-    for entry_point in pkg_resources.iter_entry_points("fedora.messages"):
+    for entry_point in entry_points(group="fedora.messages"):
         cls = entry_point.load()
         if cls.topic == topic:
             message_object = cls
