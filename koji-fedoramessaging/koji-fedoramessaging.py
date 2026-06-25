@@ -230,7 +230,8 @@ def skip_task_event(cbtype, kws):
     """
     Check if we should skip a ``postTaskStateChange`` event.
 
-    We are only interested in state changes to scratch builds (parent tasks).
+    We are only interested in state changes to scratch builds (parent tasks) or
+    ``buildArch`` method updates.
 
     :return: whether we should skip the message
     """
@@ -240,6 +241,9 @@ def skip_task_event(cbtype, kws):
     # only state changes
     if not kws.get("attribute", None) == "state":
         return True
+    # do not skip any updates to buildArch
+    if kws.get("info", {}).get("method") == "buildArch":
+        return False
     # only parent tasks
     if kws.get("info", {}).get("parent"):
         return True
