@@ -226,6 +226,30 @@ def get_message_body(topic, *args, **kws):
     return msg
 
 
+def skip_task_event(cbtype, kws):
+    """
+    Check if we should skip a ``postTaskStateChange`` event.
+
+    We are only interested in state changes to scratch builds (parent tasks).
+
+    :return: whether we should skip the message
+    """
+    if cbtype != "postTaskStateChange":
+        # Not a postTaskStateChange event so we let other checks handle it
+        return False
+    # only state changes
+    if not kws.get("attribute", None) == "state":
+        return True
+    # only parent tasks
+    if kws.get("info", {}).get("parent"):
+        return True
+    # only scratch builds
+    request = kws.get("info", {}).get("request", [{}])[-1]
+    if not isinstance(request, dict) or not request.get("scratch"):
+        return True
+    return False
+
+
 # This callback gets run for every koji event that starts with "post"
 @callback(
     *[
@@ -248,19 +272,8 @@ def queue_message(cbtype, *args, **kws):
     else:
         msgtype = cbtype[3:]
 
-    # Short-circuit ourselves for task events.  They are very spammy and we are
-    # only interested in state changes to scratch builds (parent tasks).
-    if cbtype == "postTaskStateChange":
-        # only state changes
-        if not kws.get("attribute", None) == "state":
-            return
-        # only parent tasks
-        if kws.get("info", {}).get("parent"):
-            return
-        # only scratch builds
-        request = kws.get("info", {}).get("request", [{}])[-1]
-        if not isinstance(request, dict) or not request.get("scratch"):
-            return
+    if skip_task_event(cbtype, kws):
+        return
 
     # Don't publish these uninformative rpm.sign messages if there's no actual
     # sigkey present.  Koji apparently adds a dummy sig value when rpms are
