@@ -5,7 +5,7 @@ Summary:        Enable Koji to send Fedora Messaging messages
 Group:          Applications/System
 License:        GPLv3
 URL:            https://github.com/fedora-infra/koji-fedoramessaging
-Source0:        koji-fedoramessaging-1.1.2.tar.gz
+Source0:        koji-fedoramessaging-1.1.3.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python
@@ -19,7 +19,7 @@ Requires:   python3-koji-fedoramessaging-messages
 Enable Koji to send Fedora Messaging messages
 
 %prep
-%setup -q -n koji-fedoramessaging-1.1.2
+%setup -q -n koji-fedoramessaging-1.1.3
 
 %build
 
