@@ -5,6 +5,7 @@ from runpy import run_path
 from unittest import mock
 
 import fedora_messaging.api
+import fedora_messaging.config
 import pytest
 from koji.context import context
 from koji.plugin import callbacks, register_callback
@@ -86,6 +87,20 @@ def mocked_config():
     config.read_dict({"web": {"KojiFilesURL": "http://files.example.com/"}})
     with mock.patch("koji.read_config_files", return_value=config) as rcf:
         yield rcf
+
+
+@pytest.fixture(autouse=True)
+def fm_config(request, tmp_path):
+    """The fedora-messaging configuration, with the defaults and nothing else.
+
+    The ``consumer_config`` section can be set in a test with:
+    @pytest.mark.parametrize("fm_config", [{"koji_instance": "ppc"}], indirect=True)
+    """
+    conf = fedora_messaging.config.conf
+    # Make sure the system-wide configuration file isn't picked up
+    conf.load_config(str(tmp_path / "does-not-exist.toml"))
+    with mock.patch.dict(conf, {"consumer_config": getattr(request, "param", {})}):
+        yield conf
 
 
 @pytest.fixture

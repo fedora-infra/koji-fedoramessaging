@@ -15,6 +15,7 @@ import re
 from importlib.metadata import entry_points
 
 import fedora_messaging.api
+import fedora_messaging.config
 import fedora_messaging.exceptions
 import kojihub
 from jsonschema.exceptions import ValidationError
@@ -24,11 +25,24 @@ from koji.plugin import callback, callbacks, ignore_error
 
 MAX_KEY_LENGTH = 255
 
+DEFAULT_INSTANCE = "primary"
+
 # Set the logger to something that the koji logging system understands.
 # This way we can control the logging level of this plugin from koji's hub.conf
 # by adding this 'koji._koji_plugin__koji-fedoramessaging:INFO' to the LogLevel
 # conf value in hub.conf
 log = logging.getLogger(f"koji.{__name__}")
+
+
+def get_instance():
+    """Get the name of this Koji instance from the fedora-messaging configuration file.
+
+    This is what distinguishes messages from the primary Koji hub and messages from
+    the secondary hubs. It is read from the ``koji_instance`` key in the
+    ``consumer_config`` section, and defaults to ``primary``.
+    """
+    plugin_config = fedora_messaging.config.conf["consumer_config"]
+    return plugin_config.get("koji_instance", DEFAULT_INSTANCE)
 
 
 def get_base_url(environ):
@@ -265,7 +279,7 @@ def queue_message(cbtype, *args, **kws):
 
     # We need this to distinguish between messages from primary koji
     # and the secondary hubs off for s390 and ppc.
-    body["instance"] = "primary"
+    body["instance"] = get_instance()
 
     # Last thing to do before publishing: scrub some problematic fields
     # These fields are floating points which get json-encoded differently on
