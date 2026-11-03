@@ -4,6 +4,7 @@ from copy import deepcopy
 import pytest
 from koji.context import context
 from koji.plugin import run_callbacks
+from koji_fedoramessaging_messages.task import TaskStateChangeV1
 
 TEST_DATA = {
     "open": {
@@ -605,6 +606,149 @@ CLOSE_WITH_SUBTASKS_MSG = {
 }
 
 
+BUILDARCH_KWS = {
+    "attribute": "state",
+    "old": "OPEN",
+    "new": "CLOSED",
+    "info": {
+        "arch": "x86_64",
+        "awaited": False,
+        "channel_id": 1,
+        "completion_time": datetime.datetime(
+            2023, 6, 8, 11, 39, 7, 429031, tzinfo=datetime.timezone.utc
+        ),
+        "completion_ts": 1686224347.429031,
+        "create_time": datetime.datetime(
+            2023, 6, 8, 11, 37, 20, 48696, tzinfo=datetime.timezone.utc
+        ),
+        "create_ts": 1686224240.048696,
+        "host_id": 568,
+        "id": 110011392,
+        "label": "x86_64",
+        "method": "buildArch",
+        "owner": "dummy-user",
+        # It's a child task, and the request does not end with the build options:
+        # it is only published because the method is buildArch.
+        "parent": 110011389,
+        "priority": 49,
+        "start_time": datetime.datetime(
+            2023, 6, 8, 11, 37, 28, 519033, tzinfo=datetime.timezone.utc
+        ),
+        "start_ts": 1686224248.519033,
+        "state": 2,
+        "waiting": None,
+        "weight": 1.5,
+        "request": (
+            "tasks/1390/110011390/golang-modernc-file-1.0.8-1.fc39.src.rpm",
+            "rawhide",
+            "x86_64",
+            True,
+            {"repo_id": 8405060},
+        ),
+    },
+}
+
+
+BUILDARCH_MSG = {
+    "base_url": "https://koji.stg.fedoraproject.org",
+    "files_base_url": "http://files.example.com/work",
+    "info": {
+        "arch": "x86_64",
+        "awaited": False,
+        "channel_id": 1,
+        "completion_time": 1686224347.0,
+        "create_time": 1686224240.0,
+        "host_id": 568,
+        "id": 110011392,
+        "label": "x86_64",
+        "method": "buildArch",
+        "owner": "dummy-user",
+        "parent": 110011389,
+        "priority": 49,
+        "start_time": 1686224248.0,
+        "state": 2,
+        "waiting": None,
+        "request": [
+            "tasks/1390/110011390/golang-modernc-file-1.0.8-1.fc39.src.rpm",
+            "rawhide",
+            "x86_64",
+            True,
+            {"repo_id": 8405060},
+        ],
+        "host_name": "builder.example.com",
+        "url": "https://koji.stg.fedoraproject.org/koji/taskinfo?taskID=110011392",
+        "result": None,
+        "children": [],
+    },
+    "method": "buildArch",
+    "attribute": "state",
+    "old": "OPEN",
+    "new": "CLOSED",
+    "id": 110011392,
+    "srpm": "golang-modernc-file-1.0.8-1.fc39.src.rpm",
+    "owner": "dummy-user",
+    "instance": "primary",
+}
+
+
+SKIP_CASES = [
+    pytest.param(
+        "postBuildStateChange",
+        {"attribute": "volume_id"},
+        False,
+        id="other-callback",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {"attribute": "weight", "info": {"method": "build", "request": [{"scratch": True}]}},
+        True,
+        id="not-a-state-change",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {"attribute": "state", "info": {"method": "build", "request": [{"scratch": True}]}},
+        False,
+        id="scratch-parent-task",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {"attribute": "state", "info": {"method": "build", "request": ["rawhide"]}},
+        True,
+        id="non-scratch-parent-task",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {
+            "attribute": "state",
+            "info": {"method": "rebuildSRPM", "parent": 42, "request": [{"scratch": True}]},
+        },
+        True,
+        id="child-task",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {
+            "attribute": "state",
+            "info": {"method": "buildArch", "parent": 42, "request": ["x86_64"]},
+        },
+        False,
+        id="buildarch-child-task",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {"attribute": "state", "info": {"method": "buildArch", "request": ["x86_64"]}},
+        False,
+        id="buildarch-non-scratch-task",
+    ),
+    pytest.param(
+        "postTaskStateChange",
+        {"attribute": "weight", "info": {"method": "buildArch", "parent": 42}},
+        True,
+        id="buildarch-not-a-state-change",
+    ),
+]
+
+
 @pytest.mark.parametrize("event", ("open", "close", "cancel", "fail"))
 def test_simple(module, event):
     run_callbacks("postTaskStateChange", **TEST_DATA[event]["kws"])
@@ -665,3 +809,27 @@ def test_only_publish_state_changes(module):
     }
     run_callbacks("postTaskStateChange", **not_a_state_change)
     assert not hasattr(context, "fedmsg_plugin_messages")
+
+
+def test_publish_buildarch_tasks(module):
+    # buildArch tasks are published even though they are child tasks of a
+    # non-scratch build.
+    run_callbacks("postTaskStateChange", **deepcopy(BUILDARCH_KWS))
+    assert len(context.fedmsg_plugin_messages) == 1
+    msg = context.fedmsg_plugin_messages[0]
+    assert msg == {"topic": "task.state.change", "msg": BUILDARCH_MSG}
+    fm_msg = module["get_message"](f"buildsys.{msg['topic']}", msg["msg"])
+    assert isinstance(fm_msg, TaskStateChangeV1)
+    fm_msg.validate()
+
+
+def test_no_publish_buildarch_other_attributes(module):
+    buildarch_weight_change = deepcopy(BUILDARCH_KWS)
+    buildarch_weight_change["attribute"] = "weight"
+    run_callbacks("postTaskStateChange", **buildarch_weight_change)
+    assert not hasattr(context, "fedmsg_plugin_messages")
+
+
+@pytest.mark.parametrize("cbtype, kws, expected", SKIP_CASES)
+def test_skip_task_event(module, cbtype, kws, expected):
+    assert module["skip_task_event"](cbtype, kws) is expected
